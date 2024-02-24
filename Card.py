@@ -28,6 +28,8 @@ class Card:
         suit_names = {'S': 'Spade', 'H': 'Heart', 'C': 'Club', 'D': 'Diamond'}
         return f'{self.value} of {suit_names[self.suit]}'
 
+    def __str__(self):
+        return self.visual()
 
 def all_cards() -> List[Card]:
     suits = ['C', 'S', 'H', 'D']  # each for clubs, spades, hearts, and diamonds suits
