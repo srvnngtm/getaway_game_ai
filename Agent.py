@@ -19,11 +19,11 @@ class RandomAgent:
     def _random_picker(self, cards):
         return cards, cards.pop(random.randrange(len(cards)))
 
-    def make_move(self, current_round: List[Card]):
+    def make_move(self, current_round: List[Card]) -> (Card, bool):
         if len(current_round) == 0:
             curr_list, popped_card = self._random_picker(self.hand)
             self.hand = curr_list
-            return popped_card
+            return popped_card, False
 
         else:
             suit_in_play = current_round[0].suit
@@ -34,14 +34,21 @@ class RandomAgent:
             if len(suit_cards) == 0:
                 curr_list, popped_card = self._random_picker(self.hand)
                 self.hand = curr_list
-                return popped_card
+                return popped_card, True
             else:
                 curr_list, popped_card = self._random_picker(suit_cards)
                 self.hand = [card for card in non_suit_cards]
                 self.hand.extend(curr_list)
-                return popped_card
+                return popped_card, False
 
     def has_spade_ace(self):
         if len([card for card in self.hand if (card.suit == 'S' and card.value=='A') ]) >0:
             return True
         return False
+
+    def is_play_over(self):
+        return len(self.hand) == 0
+
+    def clear_agent(self):
+        self.hand = []
+
