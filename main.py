@@ -2,7 +2,7 @@ import collections
 import random
 
 import Agent
-from Agent import RandomAgent
+from Agent import RandomAgent, GreedyAgent
 from Card import Card, all_cards
 
 # cards = all_cards()
@@ -16,15 +16,15 @@ from Card import Card, all_cards
 # gameplay
 
 
-n_players = 7
+n_players = 6
 # init_agents
-p1 = RandomAgent('p1')
+p1 = GreedyAgent('p1')
 p2 = RandomAgent('p2')
-p3 = RandomAgent('p3')
+p3 = GreedyAgent('p3')
 p4 = RandomAgent('p4')
-p5 = RandomAgent('p5')
+p5 = GreedyAgent('p5')
 p6 = RandomAgent('p6')
-p7 = RandomAgent('p7')
+# p7 = GreedyAgent('p7')
 # p8 = RandomAgent('p8')
 # p9 = RandomAgent('p9')
 # p10 = RandomAgent('p10')
@@ -32,7 +32,7 @@ p7 = RandomAgent('p7')
 # p12 = RandomAgent('p12')
 
 
-players = [p1, p2, p3, p4, p5, p6, p7]
+players = [p1, p2, p3, p4, p5, p6]
 winners = []
 
 for _ in range(1000):
@@ -138,6 +138,6 @@ for _ in range(1000):
     for each in players:
         each.clear_agent()
     print("+++++++++++ end of game ++++++++++++++")
-
+winners.sort()
 print(dict(collections.Counter(winners)))
 
