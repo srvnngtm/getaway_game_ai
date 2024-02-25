@@ -2,7 +2,7 @@ import collections
 import random
 
 import Agent
-from Agent import RandomAgent, GreedyAgent
+from Agent import RandomAgent, GreedyAgent, GreedyMinAgent
 from Card import Card, all_cards
 
 # cards = all_cards()
@@ -20,10 +20,10 @@ n_players = 6
 # init_agents
 p1 = GreedyAgent('p1')
 p2 = RandomAgent('p2')
-p3 = GreedyAgent('p3')
-p4 = RandomAgent('p4')
-p5 = GreedyAgent('p5')
-p6 = RandomAgent('p6')
+p3 = GreedyMinAgent('p3')
+p4 = GreedyAgent('p4')
+p5 = RandomAgent('p5')
+p6 = GreedyMinAgent('p6')
 # p7 = GreedyAgent('p7')
 # p8 = RandomAgent('p8')
 # p9 = RandomAgent('p9')
