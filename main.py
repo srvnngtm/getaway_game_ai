@@ -2,7 +2,7 @@ import collections
 import random
 
 import Agent
-from Agent import RandomAgent, GreedyAgent, GreedyMinAgent
+from Agent import RandomAgent, GreedyAgent, GreedyMinAgent, GreedySmartAgent
 from Card import Card, all_cards
 
 # cards = all_cards()
@@ -16,29 +16,32 @@ from Card import Card, all_cards
 # gameplay
 
 
-n_players = 6
+n_players = 4
 # init_agents
 p1 = GreedyAgent('p1')
-p2 = RandomAgent('p2')
+# p2 = GreedyAgent('p2')
 p3 = GreedyMinAgent('p3')
-p4 = GreedyAgent('p4')
+# p4 = GreedyMinAgent('p4')
 p5 = RandomAgent('p5')
-p6 = GreedyMinAgent('p6')
-# p7 = GreedyAgent('p7')
-# p8 = RandomAgent('p8')
+# p6 = RandomAgent('p6')
+p7 = GreedySmartAgent('p7')
+# p8 = GreedySmartAgent('p8')
 # p9 = RandomAgent('p9')
 # p10 = RandomAgent('p10')
 # p11 = RandomAgent('p11')
 # p12 = RandomAgent('p12')
 
 
-players = [p1, p2, p3, p4, p5, p6]
+players = [p1, p3,  p5, p7]
 winners = []
 
 for _ in range(1000):
-    temp1 = players[1:]
-    temp1.append(players[0])
-    players = [k for k in temp1]
+
+    # Either do a clockwise rotation, or do a shuffle of players, to make sure there is no undercut.
+    # temp1 = players[1:]
+    # temp1.append(players[0])
+    # players = [k for k in temp1]
+    random.shuffle(players)
 
     # init cards
     cards = all_cards()
