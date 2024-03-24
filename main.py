@@ -2,8 +2,11 @@ import collections
 import random
 
 import Agent
-from Agent import RandomAgent, GreedyAgent, GreedyMinAgent, GreedySmartAgent
+from Agent import RandomAgent, GreedyAgent, GreedyMinAgent, GreedySmartAgent, MCTSAgent
 from Card import Card, all_cards
+from tqdm import tqdm
+import pickle
+
 
 # cards = all_cards()
 
@@ -16,15 +19,21 @@ from Card import Card, all_cards
 # gameplay
 
 
-n_players = 4
+n_players = 3
+p1 = GreedyMinAgent('p1')
+# p2 = RandomAgent('p2')
+p3 = GreedyAgent('p3')
+p4 = MCTSAgent('p4')
+
 # init_agents
-p1 = GreedyAgent('p1')
+# p1 = GreedyAgent('p1')
+
 # p2 = GreedyAgent('p2')
-p3 = GreedyMinAgent('p3')
+
 # p4 = GreedyMinAgent('p4')
-p5 = RandomAgent('p5')
+
 # p6 = RandomAgent('p6')
-p7 = GreedySmartAgent('p7')
+
 # p8 = GreedySmartAgent('p8')
 # p9 = RandomAgent('p9')
 # p10 = RandomAgent('p10')
@@ -32,16 +41,18 @@ p7 = GreedySmartAgent('p7')
 # p12 = RandomAgent('p12')
 
 
-players = [p1, p3,  p5, p7]
+players = [ p1, p3,  p4]
 winners = []
 
-for _ in range(1000):
+for _ in tqdm(range(1000)):
 
     # Either do a clockwise rotation, or do a shuffle of players, to make sure there is no undercut.
     # temp1 = players[1:]
     # temp1.append(players[0])
     # players = [k for k in temp1]
+
     random.shuffle(players)
+
 
     # init cards
     cards = all_cards()
@@ -53,16 +64,14 @@ for _ in range(1000):
 
     hands = [cards[i::n_players] for i in range(0, n_players)]
 
-    for hand in hands:
-        print(len(hand))
+    # for hand in hands:
+    #     print(len(hand))
 
     for i in range(n_players):
         players[i].accept_card_list(hands[i])
 
-    for each in players:
-        print(f"{each.name} has Ace of space ? {each.has_spade_ace()}")
-
-
+    # for each in players:
+    #     print(f"{each.name} has Ace of space ? {each.has_spade_ace()}")
 
 
     game_in_play = True
@@ -85,15 +94,15 @@ for _ in range(1000):
     # print(current_order)
 
     while game_in_play:
-        print(current_order)
+        # print(current_order)
         cards_played_in_round = []
         is_round_terminated = False
         played_in_round_dict = {}
         for player in current_order:
             curr = player_name_dict[player]
-            played_card, is_round_terminated = curr.make_move(cards_played_in_round)
+            played_card, is_round_terminated = curr.make_move(played_in_round_dict)
             cards_played_in_round.append(played_card)
-            played_in_round_dict[played_card.name()] = player
+            played_in_round_dict[played_card] = player
             if is_round_terminated:
                 break
 
@@ -103,18 +112,22 @@ for _ in range(1000):
 
             non_term_cards = cards_played_in_round[:-1]
             max_card = max(non_term_cards, key=lambda x: x.utility_function())
-            max_player = played_in_round_dict[max_card.name()]
+            max_player = played_in_round_dict[max_card]
 
             player_name_dict[max_player].accept_card_list(cards_played_in_round)
 
 
         else:
             max_card = max(cards_played_in_round, key=lambda x: x.utility_function())
-            max_player = played_in_round_dict[max_card.name()]
+            max_player = played_in_round_dict[max_card]
 
         # print(max_player)
 
         max_player_index = current_order.index(max_player)
+
+        for player in players:
+            player.announce_round(cards_played_in_round, max_player )
+
 
         # print(max_player_index)
         temp = current_order[max_player_index:]
@@ -136,11 +149,34 @@ for _ in range(1000):
         #     string += ", ".join([card.name() for card in each.hand])
         #     print(string)
 
-        print(" \n ---------------- end of round ----------------\n")
+        # print(" \n ---------------- end of round ----------------\n")
 
     for each in players:
         each.clear_agent()
-    print("+++++++++++ end of game ++++++++++++++")
+
+
+
+    # save q values and number_iterations every 1000 iterations
+    if _ % 1000 == 0:
+        print("saving values")
+        with open("q_values", 'wb') as file:
+            # Serialize and write the variable to the file
+            pickle.dump(p4.Q, file)
+
+        with open("num_updates", 'wb') as file:
+            # Serialize and write the variable to the file
+            pickle.dump(p4.num_updates, file)
+        # print("+++++++++++ end of game ++++++++++++++")
+
+
 winners.sort()
 print(dict(collections.Counter(winners)))
+
+with open("q_values", 'wb') as file:
+    # Serialize and write the variable to the file
+    pickle.dump(p4.Q, file)
+
+with open("num_updates", 'wb') as file:
+    # Serialize and write the variable to the file
+    pickle.dump(p4.num_updates, file)
 
