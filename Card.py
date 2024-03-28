@@ -39,10 +39,10 @@ class Card:
 
 
 def all_cards() -> List[Card]:
-    suits = [ 'S', 'H']  # each for clubs, spades, hearts, and diamonds suits
-    # suits = ['C', 'S', 'H', 'D']  # each for clubs, spades, hearts, and diamonds suits
-    value = [2, 3, 4, 5, 6, 'A']
-    # value = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K', 'A']
+    # suits = [ 'S', 'H']  # each for clubs, spades, hearts, and diamonds suits
+    suits = ['C', 'S', 'H', 'D']  # each for clubs, spades, hearts, and diamonds suits
+    # value = [2, 3, 4, 5, 6, 'A']
+    value = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K', 'A']
 
     cards = []
     for s in suits:
