@@ -40,6 +40,9 @@ class Agent:
     def announce_round(self, cards, taker):
         pass
 
+    def calculate_score(self):
+        return sum([card.utility_function() for card in self.hand])
+
 
 class RandomAgent(Agent):
 
@@ -66,10 +69,14 @@ class RandomAgent(Agent):
         else:
             suit_in_play = current_round[0].suit
 
+            suit_cards= []
+            non_suit_cards = []
+            for card in self.hand:
+                if card.suit == suit_in_play:
+                    suit_cards.append(card)
+                else:
+                    non_suit_cards.append(card)
 
-
-            suit_cards = [card for card in self.hand if card.suit == suit_in_play]
-            non_suit_cards = [card for card in self.hand if card.suit != suit_in_play]
 
             if len(suit_cards) == 0:
                 curr_list, popped_card = self._random_picker(self.hand)
@@ -118,8 +125,13 @@ class GreedyAgent(Agent):
         else:
             suit_in_play = current_round[0].suit
 
-            suit_cards = [card for card in self.hand if card.suit == suit_in_play]
-            non_suit_cards = [card for card in self.hand if card.suit != suit_in_play]
+            suit_cards= []
+            non_suit_cards = []
+            for card in self.hand:
+                if card.suit == suit_in_play:
+                    suit_cards.append(card)
+                else:
+                    non_suit_cards.append(card)
 
             if len(suit_cards) == 0:
                 curr_list, popped_card = self._random_picker(self.hand)
@@ -166,8 +178,13 @@ class GreedyMinAgent(Agent):
         else:
             suit_in_play = current_round[0].suit
 
-            suit_cards = [card for card in self.hand if card.suit == suit_in_play]
-            non_suit_cards = [card for card in self.hand if card.suit != suit_in_play]
+            suit_cards= []
+            non_suit_cards = []
+            for card in self.hand:
+                if card.suit == suit_in_play:
+                    suit_cards.append(card)
+                else:
+                    non_suit_cards.append(card)
 
             if len(suit_cards) == 0:
                 curr_list, popped_card = self._random_picker(self.hand)
@@ -218,8 +235,13 @@ class GreedySmartAgent(Agent):
         else:
             suit_in_play = current_round[0].suit
 
-            suit_cards = [card for card in self.hand if card.suit == suit_in_play]
-            non_suit_cards = [card for card in self.hand if card.suit != suit_in_play]
+            suit_cards= []
+            non_suit_cards = []
+            for card in self.hand:
+                if card.suit == suit_in_play:
+                    suit_cards.append(card)
+                else:
+                    non_suit_cards.append(card)
 
             if len(suit_cards) == 0:
                 curr_list, popped_card = self._random_picker(self.hand, True)
@@ -234,20 +256,21 @@ class GreedySmartAgent(Agent):
                 return popped_card, False
 
 
-def zero():
-    return 0
-
-
-def dd():
-    return defaultdict(zero)
+# def zero():
+#     return 0
+#
+#
+# def dd():
+#     return defaultdict(zero)
 
 
 class MCTSAgent(Agent):
-    Q = defaultdict(dd)
-    num_updates = defaultdict(dd)
+    Q = {}
+    num_updates = {}
 
     def __init__(self, name):
         super().__init__(name)
+        self.all_cards_set = set(all_cards())
 
         try:
             with open('q_values', 'rb') as file:
@@ -264,6 +287,13 @@ class MCTSAgent(Agent):
 
         except:
             print("couldn't reload num updates")
+
+
+    def copy(self, name):
+        copy_agent = MCTSAgent(name)
+        copy_agent.hand = [i for i in self.hand]
+        copy_agent.hand_count = self.hand_count
+        return copy_agent
 
     played_cards = []
 
@@ -345,20 +375,20 @@ class MCTSAgent(Agent):
     def simulator_open(self, my_card, current_round_dict: dict[Card, str], **kwargs) -> float:
         value = 0.0
 
-        current_round_dict[my_card] = 'p4'
+        current_round_dict[my_card] = self.name
 
         environment = {}
         all_players = {'p1', 'p2', 'p3', 'p4'}
 
         for k, v in kwargs.items():
-            if k != 'p4':
+            if k != self.name:
                 environment[k] = v.copy(k)
 
-        cards = set(all_cards())
-        cards_remaining = list((cards - set(self.played_cards)) - set(self.hand))
 
-        if len(cards_remaining) < len(all_players):
-            return value
+        # cards_remaining = (self.all_cards_set - set(self.played_cards)) - set(self.hand)
+
+        # if len(cards_remaining) < len(all_players):
+        #     return value
 
         is_round_terminated = False
         cards_played_in_round = list(current_round_dict.keys())
@@ -385,25 +415,98 @@ class MCTSAgent(Agent):
             max_player = current_round_dict[max_card]
 
             # reduce value to penalize losing the round.
+            if max_player == self.name:
+                value -= 50
+            else:
+                # reward for causing another player to lose
+                value += 200
+
+        # else:
+        #     max_card = max(cards_played_in_round, key=lambda x: x.utility_function())
+        #     max_player = current_round_dict[max_card]
+        #
+        #     # penalize for being the biggest card in the round
+        #     if max_player == 'p4':
+        #         value -= 10
+
+            # add reward for playing making players play small cards
+        if len(simulated_cards_in_round) > 0:
+            additional = sum([x.utility_function() for x in simulated_cards_in_round]) / len(
+                simulated_cards_in_round)
+            value += additional
+
+        if len(self.hand) == 0 or len(self.hand) == 1:
+            value += 2000
+
+        return value
+
+
+
+    # def open_sim_wrapper(self, action, current_round_dict, **kwargs):
+    #     reward = 0
+    #     for i in range(10):
+    #         reward += self.simulator_open(action, current_round_dict, **kwargs)
+    #     return  reward/4
+
+
+    def smart_sim_open(self, my_card, current_round_dict: dict[Card, str], **kwargs) -> float:
+        value = 0.0
+
+        current_round_dict[my_card] = 'p4'
+
+        environment = {}
+        all_players = {'p1', 'p2', 'p3', 'p4'}
+
+        for k, v in kwargs.items():
+            if k != 'p4':
+                environment[k] = v
+
+        # cards = set(all_cards())
+        # cards_remaining = list((cards - set(self.played_cards)) - set(self.hand))
+        #
+        # if len(cards_remaining) < len(all_players):
+        #     return value
+
+        is_round_terminated = False
+        cards_played_in_round = list(current_round_dict.keys())
+        simulated_cards_in_round = []
+
+        remaining_players = list(all_players - set(current_round_dict.values()))
+        # random.shuffle(remaining_players)
+        for player_name in remaining_players:
+
+            player = environment.get(player_name)
+            if player.is_play_over():
+                continue
+            played_card, is_round_terminated = player.make_move(current_round_dict)
+
+            # no copy, so put the card back
+            player.accept_card(played_card)
+
+            current_round_dict[played_card] = player_name
+            cards_played_in_round.append(played_card)
+            simulated_cards_in_round.append(played_card)
+
+            if is_round_terminated:
+                break
+
+        if is_round_terminated:
+            non_term_cards = cards_played_in_round[:-1]
+            max_card = max(non_term_cards, key=lambda x: x.utility_function())
+            max_player = current_round_dict[max_card]
+
+            # reduce value to penalize losing the round.
             if max_player == 'p4':
                 value -= 50
             else:
                 # reward for causing another player to lose
                 value += 200
 
-        else:
-            max_card = max(cards_played_in_round, key=lambda x: x.utility_function())
-            max_player = current_round_dict[max_card]
-
-            # penalize for being the biggest card in the round
-            if max_player == 'p4':
-                value -= 10
-
             # add reward for playing making players play small cards
-            if len(simulated_cards_in_round) > 0:
-                additional = sum([x.utility_function() for x in simulated_cards_in_round]) / len(
-                    simulated_cards_in_round)
-                value += additional
+        # if len(simulated_cards_in_round) > 0:
+        #     additional = sum([x.utility_function() for x in simulated_cards_in_round]) / len(
+        #         simulated_cards_in_round)
+        #     value += additional
 
         if len(self.hand) == 0 or len(self.hand) == 1:
             value += 2000
@@ -425,48 +528,62 @@ class MCTSAgent(Agent):
         # with Pool() as pool:
         #     params = [(action, current_round_dict) for action in cards]
         #     # reward = self.simulator_open(action, current_round_dict, **kwargs)
-        #     results = pool.starmap(partial(self.simulator_open,**kwargs), params)
+        #     results = pool.starmap(partial(self.open_sim_wrapper,**kwargs), params)
         #     pool.close()
         #     pool.join()
 
-        results = [self.simulator_open(action, current_round_dict, **kwargs) for action in cards]
+
+        for action in cards:
+            reward = 0
+            for i in range(5):
+                reward += self.simulator_open(action, current_round_dict, **kwargs)
+                # reward += self.smart_sim_open(action, current_round_dict, **kwargs)
+            rewards_for_cards[action] = (reward/4)
+
+
+        # results = [self.simulator_open(action, current_round_dict, **kwargs) for action in cards]
         # print(results)
 
-        rewards_for_cards = {}
-        for i in range(len(cards)):
-            rewards_for_cards[cards[i]] = results[i]
-        # print(rewards_for_cards)
+        # for i in range(len(cards)):
+        #     rewards_for_cards[cards[i]] = results[i]
 
         for card in cards:
             action = card
             # Q[state][action] = value
-            state_actions = self.Q[state]
+            state_actions = self.Q.get(state, dict({}))
 
             # reward = self.simulator(card, current_round_dict)
             # reward = self.simulator_open(action, current_round_dict, **kwargs)
 
             reward = rewards_for_cards[action]
-            updates = self.num_updates[state][action]
+            updates = self.num_updates.get(state, dict({})).get(action, 0)
 
-            curr_value = state_actions[action]
+            curr_value = state_actions.get(action, 0)
             eta = 1 / (1 + updates)
 
             next_action = tuple([c for c in state if c != action])
 
-            next_state_actions = self.Q[next_action].items()
+            next_state_actions = self.Q.get(next_action, dict({})).items()
             V_opt_next_state = max(next_state_actions, key=lambda x: x[1])[1] if len(next_state_actions) > 0 else 0
 
-            q_value = (1 - eta) * curr_value + eta * (reward + V_opt_next_state)
+            q_value = ((1 - eta) * curr_value) + (eta * (reward + V_opt_next_state))
 
-            self.Q[state][action] = q_value
-            self.num_updates[state][action] += 1
+            next_state_actions = self.Q.get(next_action, dict({}))
+            next_state_actions[action] = q_value
+            self.Q[state] = next_state_actions
+
+            updates_dict = self.num_updates.get(state, dict({}))
+            updates_dict[action] = updates + 1
+            self.num_updates[state] = updates_dict
 
         max_val = float('-inf')
         card_to_pick = None
+
+        state_action_values = self.Q.get(state, dict({}))
         for card in cards:
-            if self.Q[state][card] > max_val:
+            if state_action_values.get(card, 0) > max_val:
                 card_to_pick = card
-                max_val = self.Q[state][card]
+                max_val = state_action_values.get(card, 0)
 
         # card_to_pick_list =
         # card_to_pick = max(card_to_pick_list, key=card_to_pick_list.get)
@@ -485,8 +602,13 @@ class MCTSAgent(Agent):
         else:
             suit_in_play = current_round[0].suit
 
-            suit_cards = [card for card in self.hand if card.suit == suit_in_play]
-            non_suit_cards = [card for card in self.hand if card.suit != suit_in_play]
+            suit_cards= []
+            non_suit_cards = []
+            for card in self.hand:
+                if card.suit == suit_in_play:
+                    suit_cards.append(card)
+                else:
+                    non_suit_cards.append(card)
 
             if len(suit_cards) == 0:
                 curr_list, popped_card = self._picker(self.hand, current_round_dict, True, **kwargs)

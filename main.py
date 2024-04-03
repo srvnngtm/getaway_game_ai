@@ -21,8 +21,8 @@ import gc
 def main(chunk):
     n_players = 4
     p1 = GreedyMinAgent('p1')
-    p2 = RandomAgent('p2')
-    p3 = GreedyAgent('p3')
+    p2 = GreedyAgent('p2')
+    p3 = RandomAgent('p3')
     p4 = MCTSAgent('p4')
 
     # init_agents
@@ -40,11 +40,11 @@ def main(chunk):
     # p11 = RandomAgent('p11')
     # p12 = RandomAgent('p12')
 
-
     players = [p1, p2, p3, p4]
     winners = []
+    scores = {p.name: 0 for p in players}
 
-    for _ in tqdm(range(100)):
+    for _ in tqdm(range(1,10001)):
 
         # Either do a clockwise rotation, or do a shuffle of players, to make sure there is no undercut.
         # temp1 = players[1:]
@@ -101,7 +101,7 @@ def main(chunk):
                 played_card, is_round_terminated = curr.make_move(
                     current_round_dict=played_in_round_dict,
                     **player_name_dict
-                    )
+                )
                 cards_played_in_round.append(played_card)
                 played_in_round_dict[played_card] = player
                 if is_round_terminated:
@@ -138,6 +138,11 @@ def main(chunk):
 
             if any(over):
                 game_in_play = False
+
+                scoring_players = sorted(players, key=lambda x: x.calculate_score())
+                for i, player in enumerate(scoring_players):
+                    scores[player.name] += max(0,(3 - i))
+
                 winners.append(players[over.index(True)].name)
 
             # print(current_order)
@@ -152,35 +157,35 @@ def main(chunk):
         for each in players:
             each.clear_agent()
 
-
         # save q values and number_iterations every 1000 iterations
-        if _ % 1000 == 0:
+        if _ % 10000 == 0:
             print("saving values")
-            with open("q_values", 'wb') as file:
-                # Serialize and write the variable to the file
-                pickle.dump(p4.Q, file)
-
-            with open("num_updates", 'wb') as file:
-                # Serialize and write the variable to the file
-                pickle.dump(p4.num_updates, file)
-            # print("+++++++++++ end of game ++++++++++++++")
+            # with open("q_values", 'wb') as file:
+            #     # Serialize and write the variable to the file
+            #     pickle.dump(p4.Q, file)
+            #
+            # with open("num_updates", 'wb') as file:
+            #     # Serialize and write the variable to the file
+            #     pickle.dump(p4.num_updates, file)
+            # # print("+++++++++++ end of game ++++++++++++++")
             winners.sort()
             print(dict(collections.Counter(winners)))
+            print(scores)
 
     winners.sort()
     print(dict(collections.Counter(winners)))
 
-    with open("q_values", 'wb') as file:
-        # Serialize and write the variable to the file
-        pickle.dump(p4.Q, file)
-
-    with open("num_updates", 'wb') as file:
-        # Serialize and write the variable to the file
-        pickle.dump(p4.num_updates, file)
+    # with open("q_values", 'wb') as file:
+    #     # Serialize and write the variable to the file
+    #     pickle.dump(p4.Q, file)
+    #
+    # with open("num_updates", 'wb') as file:
+    #     # Serialize and write the variable to the file
+    #     pickle.dump(p4.num_updates, file)
 
 
 if __name__ == '__main__':
-    for i in range(2):
+    for i in range(1):
         main(i)
 
     # main(1)
