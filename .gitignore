@@ -258,6 +258,6 @@ Temporary Items
 # Ignore everything but code style settings and run configurations
 # that are supposed to be shared within teams.
 
-
+./saved_values/
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,pycharm,intellij+all,pycharm+all

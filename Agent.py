@@ -373,7 +373,7 @@ class MCTSAgent(Agent):
         return value
 
     def simulator_open(self, my_card, current_round_dict: dict[Card, str], **kwargs) -> float:
-        value = 0.0
+        value = -10.0
 
         current_round_dict[my_card] = self.name
 
@@ -415,11 +415,11 @@ class MCTSAgent(Agent):
             max_player = current_round_dict[max_card]
 
             # reduce value to penalize losing the round.
-            if max_player == self.name:
-                value -= 50
-            else:
-                # reward for causing another player to lose
-                value += 200
+            # if max_player == self.name:
+            #     value -= 100
+            # else:
+            #     # reward for causing another player to lose
+            #     value += 20
 
         # else:
         #     max_card = max(cards_played_in_round, key=lambda x: x.utility_function())
@@ -435,8 +435,17 @@ class MCTSAgent(Agent):
                 simulated_cards_in_round)
             value += additional
 
-        if len(self.hand) == 0 or len(self.hand) == 1:
-            value += 2000
+        over = [player.is_play_over() for player in environment.values()]
+
+        if any(over):
+            if not self.is_play_over():
+                value -= 2000
+            else :
+                value += 2000
+
+
+        # if len(self.hand) == 0 or len(self.hand) == 1:
+        #     value += 2000
 
         return value
 
@@ -587,7 +596,14 @@ class MCTSAgent(Agent):
 
         # card_to_pick_list =
         # card_to_pick = max(card_to_pick_list, key=card_to_pick_list.get)
+
+        probability = random.random()
+        if probability < 0.2:
+            card_to_pick = random.choice(cards)
+
         cards.remove(card_to_pick)
+
+
         return cards, card_to_pick
 
     def make_move(self, current_round_dict: dict[Card, str], **kwargs) -> (Card, bool):

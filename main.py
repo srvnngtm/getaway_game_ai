@@ -44,7 +44,7 @@ def main(chunk):
     winners = []
     scores = {p.name: 0 for p in players}
 
-    for _ in tqdm(range(1,10001)):
+    for _ in tqdm(range(1,20001)):
 
         # Either do a clockwise rotation, or do a shuffle of players, to make sure there is no undercut.
         # temp1 = players[1:]
@@ -171,17 +171,18 @@ def main(chunk):
             winners.sort()
             print(dict(collections.Counter(winners)))
             print(scores)
-
-    winners.sort()
-    print(dict(collections.Counter(winners)))
-
-    # with open("q_values", 'wb') as file:
-    #     # Serialize and write the variable to the file
-    #     pickle.dump(p4.Q, file)
     #
-    # with open("num_updates", 'wb') as file:
-    #     # Serialize and write the variable to the file
-    #     pickle.dump(p4.num_updates, file)
+    # last_100_winners = winners[-100:]
+    # print(dict(collections.Counter(winners)))
+    # print(dict(collections.Counter(last_100_winners)))
+
+    with open("q_values", 'wb') as file:
+        # Serialize and write the variable to the file
+        pickle.dump(p4.Q, file)
+
+    with open("num_updates", 'wb') as file:
+        # Serialize and write the variable to the file
+        pickle.dump(p4.num_updates, file)
 
 
 if __name__ == '__main__':
