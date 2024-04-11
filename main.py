@@ -3,7 +3,7 @@ import multiprocessing
 import random
 
 import Agent
-from Agent import RandomAgent, GreedyAgent, GreedyMinAgent, GreedySmartAgent, MCTSAgent
+from Agent import RandomAgent, GreedyAgent, GreedyMinAgent, GreedySmartAgent, QLearningAgent
 from Card import Card, all_cards
 from tqdm import tqdm
 import pickle
@@ -23,7 +23,8 @@ def main(chunk):
     p1 = GreedyMinAgent('p1')
     p2 = GreedyAgent('p2')
     p3 = RandomAgent('p3')
-    p4 = MCTSAgent('p4')
+    # p4 = QLearningAgent('p4')
+    p4 = QLearningAgent('p4')
 
     # init_agents
     # p1 = GreedyAgent('p1')
@@ -43,8 +44,9 @@ def main(chunk):
     players = [p1, p2, p3, p4]
     winners = []
     scores = {p.name: 0 for p in players}
-
-    for _ in tqdm(range(1,20001)):
+    cards = all_cards()
+    # random.shuffle(cards)
+    for _ in tqdm(range(1,10001)):
 
         # Either do a clockwise rotation, or do a shuffle of players, to make sure there is no undercut.
         # temp1 = players[1:]
@@ -54,7 +56,7 @@ def main(chunk):
         random.shuffle(players)
 
         # init cards
-        cards = all_cards()
+        # cards = all_cards()
 
         # shuffle cards
         random.shuffle(cards)
@@ -160,14 +162,14 @@ def main(chunk):
         # save q values and number_iterations every 1000 iterations
         if _ % 10000 == 0:
             print("saving values")
-            # with open("q_values", 'wb') as file:
-            #     # Serialize and write the variable to the file
-            #     pickle.dump(p4.Q, file)
-            #
-            # with open("num_updates", 'wb') as file:
-            #     # Serialize and write the variable to the file
-            #     pickle.dump(p4.num_updates, file)
-            # # print("+++++++++++ end of game ++++++++++++++")
+            with open("q_values", 'wb') as file:
+                # Serialize and write the variable to the file
+                pickle.dump(p4.Q, file)
+
+            with open("num_updates", 'wb') as file:
+                # Serialize and write the variable to the file
+                pickle.dump(p4.num_updates, file)
+            # print("+++++++++++ end of game ++++++++++++++")
             winners.sort()
             print(dict(collections.Counter(winners)))
             print(scores)

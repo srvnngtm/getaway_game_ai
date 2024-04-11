@@ -264,7 +264,7 @@ class GreedySmartAgent(Agent):
 #     return defaultdict(zero)
 
 
-class MCTSAgent(Agent):
+class QLearningAgent(Agent):
     Q = {}
     num_updates = {}
 
@@ -290,7 +290,7 @@ class MCTSAgent(Agent):
 
 
     def copy(self, name):
-        copy_agent = MCTSAgent(name)
+        copy_agent = QLearningAgent(name)
         copy_agent.hand = [i for i in self.hand]
         copy_agent.hand_count = self.hand_count
         return copy_agent
@@ -534,27 +534,12 @@ class MCTSAgent(Agent):
 
         rewards_for_cards = {}
 
-        # with Pool() as pool:
-        #     params = [(action, current_round_dict) for action in cards]
-        #     # reward = self.simulator_open(action, current_round_dict, **kwargs)
-        #     results = pool.starmap(partial(self.open_sim_wrapper,**kwargs), params)
-        #     pool.close()
-        #     pool.join()
-
-
         for action in cards:
             reward = 0
             for i in range(5):
                 reward += self.simulator_open(action, current_round_dict, **kwargs)
                 # reward += self.smart_sim_open(action, current_round_dict, **kwargs)
             rewards_for_cards[action] = (reward/4)
-
-
-        # results = [self.simulator_open(action, current_round_dict, **kwargs) for action in cards]
-        # print(results)
-
-        # for i in range(len(cards)):
-        #     rewards_for_cards[cards[i]] = results[i]
 
         for card in cards:
             action = card
