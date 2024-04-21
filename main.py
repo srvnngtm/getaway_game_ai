@@ -20,50 +20,47 @@ import gc
 
 def main(chunk):
     n_players = 4
-    p1 = GreedyMinAgent('p1')
+    p1 = RandomAgent('p1')
     p2 = GreedyAgent('p2')
-    p3 = RandomAgent('p3')
+    p3 = GreedyMinAgent('p3')
+
     # p4 = QLearningAgent('p4')
     p4 = QLearningAgent('p4')
-
-    # init_agents
-    # p1 = GreedyAgent('p1')
-
-    # p2 = GreedyAgent('p2')
-
-    # p4 = GreedyMinAgent('p4')
-
-    # p6 = RandomAgent('p6')
-
-    # p8 = GreedySmartAgent('p8')
-    # p9 = RandomAgent('p9')
-    # p10 = RandomAgent('p10')
-    # p11 = RandomAgent('p11')
-    # p12 = RandomAgent('p12')
 
     players = [p1, p2, p3, p4]
     winners = []
     scores = {p.name: 0 for p in players}
     cards = all_cards()
-    # random.shuffle(cards)
-    for _ in tqdm(range(1,10001)):
+
+    hands = [
+        [Card(suit='C', value='A'), Card(suit='D', value='K'), Card(suit='H', value='Q'), Card(suit='S', value='J'), Card(suit='C', value='10'), Card(suit='D', value='9'), Card(suit='H', value='8'), Card(suit='S', value='7'), Card(suit='C', value='6'), Card(suit='D', value='5'), Card(suit='H', value='4'), Card(suit='S', value='3'), Card(suit='C', value='2')  ],
+        [Card(suit='S', value='A'), Card(suit='S', value='K'), Card(suit='C', value='Q'), Card(suit='D', value='J'), Card(suit='H', value='10'), Card(suit='S', value='9'), Card(suit='C', value='8'), Card(suit='D', value='7'), Card(suit='H', value='6'), Card(suit='S', value='5'), Card(suit='C', value='4'), Card(suit='D', value='3'), Card(suit='H', value='2') ],
+        [Card(suit='D', value='A'), Card(suit='H', value='K'), Card(suit='S', value='Q'), Card(suit='C', value='J'), Card(suit='D', value='10'), Card(suit='H', value='9'), Card(suit='S', value='8'), Card(suit='C', value='7'), Card(suit='D', value='6'), Card(suit='H', value='5'), Card(suit='S', value='4'), Card(suit='C', value='3'), Card(suit='D', value='2') ],
+        [Card(suit='H', value='A'), Card(suit='C', value='K'), Card(suit='D', value='Q'), Card(suit='H', value='J'), Card(suit='S', value='10'), Card(suit='C', value='9'), Card(suit='D', value='8'), Card(suit='H', value='7'), Card(suit='S', value='6'), Card(suit='C', value='5'), Card(suit='D', value='4'), Card(suit='H', value='3'), Card(suit='S', value='2') ]
+
+    ]
+
+
+    for _ in tqdm(range(1,1000001)):
 
         # Either do a clockwise rotation, or do a shuffle of players, to make sure there is no undercut.
         # temp1 = players[1:]
         # temp1.append(players[0])
         # players = [k for k in temp1]
 
-        random.shuffle(players)
+        # random.shuffle(players)
 
         # init cards
         # cards = all_cards()
 
         # shuffle cards
-        random.shuffle(cards)
+        # random.shuffle(cards)
 
         # deal cards out
 
-        hands = [cards[i::n_players] for i in range(0, n_players)]
+        # hands = [cards[i::n_players] for i in range(0, n_players)]
+
+
 
         # for hand in hands:
         #     print(len(hand))
@@ -102,7 +99,9 @@ def main(chunk):
                 curr = player_name_dict[player]
                 played_card, is_round_terminated = curr.make_move(
                     current_round_dict=played_in_round_dict,
-                    **player_name_dict
+                    player_order= current_order,
+                    **player_name_dict,
+
                 )
                 cards_played_in_round.append(played_card)
                 played_in_round_dict[played_card] = player
@@ -171,11 +170,14 @@ def main(chunk):
                 pickle.dump(p4.num_updates, file)
             # print("+++++++++++ end of game ++++++++++++++")
             winners.sort()
-            print(dict(collections.Counter(winners)))
+            d = dict(collections.Counter(winners))
+            print(d)
             print(scores)
+            p4wins = d.get('p4', 0)
+            print(f"{(p4wins / _) * 100}%")
     #
     # last_100_winners = winners[-100:]
-    # print(dict(collections.Counter(winners)))
+    print(dict(collections.Counter(winners)))
     # print(dict(collections.Counter(last_100_winners)))
 
     with open("q_values", 'wb') as file:
