@@ -20,9 +20,11 @@ import gc
 
 def main(chunk):
     n_players = 4
-    p1 = RandomAgent('p1')
-    p2 = GreedyAgent('p2')
-    p3 = GreedyMinAgent('p3')
+    p1 = GreedyAgent('p1')
+    # p2 = RandomAgent('p2')
+    p2 = GreedyMinAgent('p2')
+    # p3 = GreedySmartAgent('p3')
+    p3 = GreedySmartAgent('p3')
 
     # p4 = QLearningAgent('p4')
     p4 = QLearningAgent('p4')
@@ -31,17 +33,19 @@ def main(chunk):
     winners = []
     scores = {p.name: 0 for p in players}
     cards = all_cards()
+    rewards = []
+    bucket=[]
 
-    hands = [
-        [Card(suit='C', value='A'), Card(suit='D', value='K'), Card(suit='H', value='Q'), Card(suit='S', value='J'), Card(suit='C', value='10'), Card(suit='D', value='9'), Card(suit='H', value='8'), Card(suit='S', value='7'), Card(suit='C', value='6'), Card(suit='D', value='5'), Card(suit='H', value='4'), Card(suit='S', value='3'), Card(suit='C', value='2')  ],
-        [Card(suit='S', value='A'), Card(suit='S', value='K'), Card(suit='C', value='Q'), Card(suit='D', value='J'), Card(suit='H', value='10'), Card(suit='S', value='9'), Card(suit='C', value='8'), Card(suit='D', value='7'), Card(suit='H', value='6'), Card(suit='S', value='5'), Card(suit='C', value='4'), Card(suit='D', value='3'), Card(suit='H', value='2') ],
-        [Card(suit='D', value='A'), Card(suit='H', value='K'), Card(suit='S', value='Q'), Card(suit='C', value='J'), Card(suit='D', value='10'), Card(suit='H', value='9'), Card(suit='S', value='8'), Card(suit='C', value='7'), Card(suit='D', value='6'), Card(suit='H', value='5'), Card(suit='S', value='4'), Card(suit='C', value='3'), Card(suit='D', value='2') ],
-        [Card(suit='H', value='A'), Card(suit='C', value='K'), Card(suit='D', value='Q'), Card(suit='H', value='J'), Card(suit='S', value='10'), Card(suit='C', value='9'), Card(suit='D', value='8'), Card(suit='H', value='7'), Card(suit='S', value='6'), Card(suit='C', value='5'), Card(suit='D', value='4'), Card(suit='H', value='3'), Card(suit='S', value='2') ]
+    hands = {
+        'p1': [Card(suit='C', value='A'), Card(suit='D', value='K'), Card(suit='H', value='Q'), Card(suit='S', value='J'), Card(suit='C', value='10'), Card(suit='D', value='9'), Card(suit='H', value='8'), Card(suit='S', value='7'), Card(suit='C', value='6'), Card(suit='D', value='5'), Card(suit='H', value='4'), Card(suit='S', value='3'), Card(suit='C', value='2')  ],
+        'p2': [Card(suit='H', value='A'), Card(suit='S', value='K'), Card(suit='C', value='Q'), Card(suit='D', value='J'), Card(suit='H', value='10'), Card(suit='S', value='9'), Card(suit='C', value='8'), Card(suit='D', value='7'), Card(suit='H', value='6'), Card(suit='S', value='5'), Card(suit='C', value='4'), Card(suit='D', value='3'), Card(suit='H', value='2') ],
+        'p4': [Card(suit='D', value='A'), Card(suit='H', value='K'), Card(suit='S', value='Q'), Card(suit='C', value='J'), Card(suit='D', value='10'), Card(suit='H', value='9'), Card(suit='S', value='8'), Card(suit='C', value='7'), Card(suit='D', value='6'), Card(suit='H', value='5'), Card(suit='S', value='4'), Card(suit='C', value='3'), Card(suit='D', value='2') ],
+        'p3': [Card(suit='S', value='A'), Card(suit='C', value='K'), Card(suit='D', value='Q'), Card(suit='H', value='J'), Card(suit='S', value='10'), Card(suit='C', value='9'), Card(suit='D', value='8'), Card(suit='H', value='7'), Card(suit='S', value='6'), Card(suit='C', value='5'), Card(suit='D', value='4'), Card(suit='H', value='3'), Card(suit='S', value='2') ]
 
-    ]
+    }
 
 
-    for _ in tqdm(range(1,1000001)):
+    for _ in tqdm(range(1,100)):
 
         # Either do a clockwise rotation, or do a shuffle of players, to make sure there is no undercut.
         # temp1 = players[1:]
@@ -66,7 +70,7 @@ def main(chunk):
         #     print(len(hand))
 
         for i in range(n_players):
-            players[i].accept_card_list(hands[i])
+            players[i].accept_card_list(hands[players[i].name])
 
         # for each in players:
         #     print(f"{each.name} has Ace of space ? {each.has_spade_ace()}")
@@ -142,9 +146,19 @@ def main(chunk):
 
                 scoring_players = sorted(players, key=lambda x: x.calculate_score())
                 for i, player in enumerate(scoring_players):
-                    scores[player.name] += max(0,(3 - i))
+                    scores[player.name] += (3 - i)
 
                 winners.append(players[over.index(True)].name)
+
+            # calculate sum of rewards in the episode
+                episode_reward = sum(player_name_dict['p4'].episode_rewards)
+            #     if 0 > episode_reward > -20:
+            #         episode_reward = -100
+                rewards.append(episode_reward)
+                #
+                # if(episode_reward>0):
+                #     print(player_name_dict['p4'].episode_rewards)
+
 
             # print(current_order)
 
@@ -169,17 +183,19 @@ def main(chunk):
                 # Serialize and write the variable to the file
                 pickle.dump(p4.num_updates, file)
             # print("+++++++++++ end of game ++++++++++++++")
-            winners.sort()
+            # winners.sort()
             d = dict(collections.Counter(winners))
             print(d)
             print(scores)
             p4wins = d.get('p4', 0)
             print(f"{(p4wins / _) * 100}%")
+            bucket.append(p4wins)
+
     #
     # last_100_winners = winners[-100:]
     print(dict(collections.Counter(winners)))
     # print(dict(collections.Counter(last_100_winners)))
-
+    #
     with open("q_values", 'wb') as file:
         # Serialize and write the variable to the file
         pickle.dump(p4.Q, file)
@@ -187,6 +203,35 @@ def main(chunk):
     with open("num_updates", 'wb') as file:
         # Serialize and write the variable to the file
         pickle.dump(p4.num_updates, file)
+
+
+    # split rewards into buckets of 100s and calculate their sum
+    # rewards=rewards[-1000:]
+
+    # rewards = rewards[-10000:]
+    # buckets = [sum(rewards[i:i + 100]) for i in range(0, len(rewards), 100)]
+    # print(buckets)
+    print(rewards)
+
+    print(winners)
+
+    with open("reward", 'wb') as file:
+        pickle.dump(rewards, file)
+    with open("winners", 'wb') as file:
+        pickle.dump(winners, file)
+
+
+    # buckets = [winners[i:i + 100] for i in range(0, len(winners), 100)]
+
+
+    # winner_buckets = []
+    # # print(winners)
+    # winners= winners[-10000:]
+    # for i in range(0, len(winners), 100):
+    #     dic = dict(collections.Counter(winners[i:i+100]))
+    #     winner_buckets.append(dic.get('p4', 0))
+    #
+    # print(winner_buckets)
 
 
 if __name__ == '__main__':

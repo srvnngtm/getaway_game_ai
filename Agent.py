@@ -42,6 +42,8 @@ class Agent:
         pass
 
     def calculate_score(self):
+        if len(self.hand)==0:
+            return 0
         return sum([card.utility_function() for card in self.hand])
 
 
@@ -267,6 +269,7 @@ class GreedySmartAgent(Agent):
 class QLearningAgent(Agent):
     Q = {}
     num_updates = {}
+    episode_rewards = []
 
     def __init__(self, name):
         super().__init__(name)
@@ -301,7 +304,7 @@ class QLearningAgent(Agent):
         self.played_cards.extend(cards)
 
     def simulator_open(self, my_card, current_round_dict: dict[Card, str], **kwargs) -> float:
-        value = -10.0
+        value = -1
 
         current_round_dict[my_card] = self.name
 
@@ -312,10 +315,17 @@ class QLearningAgent(Agent):
             if k != self.name:
                 environment[k] = v.copy(k)
 
-        # cards_remaining = (self.all_cards_set - set(self.played_cards)) - set(self.hand)
+        if len(current_round_dict.values()) != 0:
+            # check if current card terminates the round
+            if my_card.suit != list(current_round_dict.keys())[0].suit:
+                if self.hand == 1:
+                    value += 100
 
-        # if len(cards_remaining) < len(all_players):
-        #     return value
+
+
+
+
+
 
         is_round_terminated = False
         cards_played_in_round = list(current_round_dict.keys())
@@ -336,32 +346,35 @@ class QLearningAgent(Agent):
             if is_round_terminated:
                 break
 
+
         if is_round_terminated:
             non_term_cards = cards_played_in_round[:-1]
             max_card = max(non_term_cards, key=lambda x: x.utility_function())
             max_player = current_round_dict[max_card]
+            if max_player != self.name:
+                environment[max_player].accept_card_list(cards_played_in_round)
+
 
         over = [player.is_play_over() for player in environment.values()]
 
+
         if any(over):
-            if not self.is_play_over():
-                value -= 2000
-            else:
-                value += 2000
+                value -= 100
+        elif self.hand_count == 1:
+            value += 100
 
         return value
 
     def _picker(self, cards, current_round_dict, brk, **kwargs):
-
+        sarsa = False
         # max case :
-        if brk:
-            card = max(cards, key=lambda x: x.utility_function())
-            ind = cards.index(card)
-            return cards, cards.pop(ind)
+        # if brk:
+        #     card = max(cards, key=lambda x: x.utility_function())
+        #     ind = cards.index(card)
+        #     return cards, cards.pop(ind)
 
         state = tuple(self.hand)
 
-        # pick a card based on epsilon greedy
         epsilon = 0.2
 
         q_current_state = {}
@@ -369,28 +382,77 @@ class QLearningAgent(Agent):
         for action in cards:
             q_current_state[action] = state_actions.get(action, 0)
 
-        chosen_action = max(q_current_state, key=q_current_state.get)
+        # choose action based on epsilon greedy
+
+
+
+        if(sarsa):
+            # chosen_action = max(cards, key=lambda x: x.utility_function())
+            chosen_action = max(q_current_state, key=q_current_state.get)
+        else:
+            chosen_action = max(q_current_state, key=q_current_state.get)
+
+
+
+        # calculate reward
+        # reward = self.simulator_open(chosen_action, current_round_dict, **kwargs)
+
+
+
+        # #-----
+        # rewards_for_cards = {}
+        # for action in cards:
+        #     reward = 0
+        #     for i in range(5):
+        #         reward += self.simulator_open(action, current_round_dict, **kwargs)
+        #         # reward += self.smart_sim_open(action, current_round_dict, **kwargs)
+        #     rewards_for_cards[action] = (reward / 5)
+        #
+        #
+        # #-----
+        #
+        # chosen_action = max(rewards_for_cards, key=rewards_for_cards.get)
+
+
+
+
 
         if TRAIN_MODE and random.random() < epsilon:
             chosen_action = random.choice(cards)
 
-        reward = self.simulator_open(chosen_action, current_round_dict, **kwargs)
+        # calculate reward 5 times and take average
+        reward =  0
+        for i in range(5):
+            reward += self.simulator_open(chosen_action, current_round_dict, **kwargs)
+        reward = reward / 5
+        # if(reward>0):
+        #     print(f"reward : {reward}")
 
-        next_action = tuple([c for c in state if c != chosen_action])
-        next_state_actions = self.Q.get(next_action, dict({})).items()
+        self.episode_rewards.append(reward)
+
+        next_state = tuple([c for c in state if c != chosen_action])
+        next_state_actions = self.Q.get(next_state, dict({}))
 
         updates = self.num_updates.get(state, dict({})).get(chosen_action, 0)
         eta = 1 / (1 + updates)
 
-        # V_opt_next_state = max(next_state_actions, key=lambda x: x[1])[1] if len(next_state_actions) > 0 else 0
-        len_next_state = len(next_state_actions)
-        if len_next_state > 0:
-            V_opt_next_state = sum([x[1] for x in next_state_actions]) / len_next_state
+        # standard q learning:
+
+
+        # SARSA, with base policy as greedy.
+        if sarsa:
+            chosen_next_state_action = max(next_state, key=lambda x: x.utility_function()) if len(
+                next_state_actions) > 0 else 0
+            V_opt_next_state = next_state_actions.get(chosen_next_state_action, 0)
         else:
-            V_opt_next_state = 0
+            next_state_actions = next_state_actions.items()
+            V_opt_next_state = max(next_state_actions, key=lambda x: x[1])[1] if len(next_state_actions) > 0 else 0
 
         curr_value = state_actions.get(chosen_action, 0)
-        q_value = ((1 - eta) * curr_value) + (eta * (reward + V_opt_next_state))
+
+        # q_value = ((1 - eta) * curr_value) + (eta * (reward + V_opt_next_state))
+
+        q_value = curr_value + (eta * (reward + V_opt_next_state - curr_value))
 
         state_actions[chosen_action] = q_value
         self.Q[state] = state_actions
@@ -436,3 +498,9 @@ class QLearningAgent(Agent):
                 self.hand.extend(curr_list)
                 self.hand_count -= 1
                 return popped_card, False
+
+    def clear_agent(self):
+        self.hand = []
+        self.hand_count = 0
+        self.played_cards = []
+        self.episode_rewards = []

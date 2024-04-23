@@ -18,7 +18,7 @@ class Card:
         elif self.value == 'A':
             return 14
         else:
-            return 0
+            return int(self.value)
 
     def visual(self):
         visual_suits = {'S': '♠', 'H': '♥', 'C': '♣', 'D': '♦'}
