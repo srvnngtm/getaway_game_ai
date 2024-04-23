@@ -152,22 +152,12 @@ def main(chunk):
 
             # calculate sum of rewards in the episode
                 episode_reward = sum(player_name_dict['p4'].episode_rewards)
-            #     if 0 > episode_reward > -20:
-            #         episode_reward = -100
                 rewards.append(episode_reward)
                 #
                 # if(episode_reward>0):
                 #     print(player_name_dict['p4'].episode_rewards)
 
 
-            # print(current_order)
-
-            # for each in players:
-            #     string = f"{len(each.hand)} cards left for {each.name} :: "
-            #     string += ", ".join([card.name() for card in each.hand])
-            #     print(string)
-
-            # print(" \n ---------------- end of round ----------------\n")
 
         for each in players:
             each.clear_agent()
